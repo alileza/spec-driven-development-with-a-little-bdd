@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spec-Driven Development with AI Agents</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+
+    <!-- Geist Fonts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-sans/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1.3.1/dist/fonts/geist-mono/style.css">
+
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+
+    <style>
+        :root {
+            --background: #111111;
+            --foreground: #f5f5f5;
+            --foreground-90: rgba(245, 245, 245, 0.9);
+            --muted: #404040;
+            --muted-foreground: #a3a3a3;
+            --secondary: #1c1c1c;
+            --border: #2a2a2a;
+            --accent: #d4a574;
+
+            --r-background-color: var(--background);
+            --r-main-font: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            --r-main-font-size: 28px;
+            --r-main-color: var(--foreground);
+            --r-heading-font: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            --r-heading-color: var(--foreground);
+            --r-heading-text-transform: none;
+            --r-link-color: var(--accent);
+            --r-link-color-hover: var(--foreground);
+            --r-selection-background-color: var(--accent);
+        }
+
+        .reveal-viewport { background: var(--background); }
+        .reveal { font-family: var(--r-main-font); font-weight: 400; }
+
+        .reveal h1 { font-size: 2.5em; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.3em; }
+        .reveal h2 { font-size: 1.8em; font-weight: 500; letter-spacing: -0.02em; color: var(--foreground); margin-bottom: 0.5em; }
+        .reveal h3 { font-size: 1.1em; font-weight: 500; color: var(--foreground); margin-bottom: 0.5em; }
+        .reveal p { line-height: 1.6; color: var(--muted-foreground); }
+        .reveal strong { color: var(--foreground); font-weight: 500; }
+        .reveal em { color: var(--muted-foreground); }
+
+        .reveal ul, .reveal ol { display: block; text-align: left; margin-left: 0; list-style: none; }
+        .reveal ul li, .reveal ol li { position: relative; padding-left: 1.5em; margin-bottom: 0.5em; color: var(--muted-foreground); line-height: 1.4; }
+        .reveal ul li::before { content: "—"; position: absolute; left: 0; color: var(--accent); }
+        .reveal ol { counter-reset: item; }
+        .reveal ol li { counter-increment: item; }
+        .reveal ol li::before { content: counter(item) "."; position: absolute; left: 0; color: var(--accent); font-family: 'Geist Mono', monospace; font-size: 0.85em; }
+        .reveal li strong { color: var(--foreground); }
+        .reveal ul ul, .reveal ol ul { margin-top: 0.3em; margin-left: 0; }
+        .reveal ul ul li::before { content: "·"; color: var(--muted); }
+
+        .reveal blockquote { border-left: 2px solid var(--accent); padding: 0 0 0 1.5em; margin: 1em 0; background: none; box-shadow: none; width: auto; max-width: 800px; }
+        .reveal blockquote p { font-size: 1.1em; font-style: italic; color: var(--foreground-90); line-height: 1.4; }
+        .reveal blockquote cite { display: block; margin-top: 0.5em; font-size: 0.65em; color: var(--muted-foreground); font-style: normal; }
+
+        .reveal pre { width: 100%; margin: 0.8em 0; box-shadow: none; }
+        .reveal code { font-family: 'Geist Mono', monospace; }
+        .reveal pre code { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1em; font-size: 0.55em; line-height: 1.5; color: var(--foreground); max-height: 400px; }
+        .reveal p code, .reveal li code { background: var(--secondary); border: 1px solid var(--border); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.8em; color: var(--foreground); }
+
+        .code-window { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 0.8em 0; }
+        .code-window-header { display: flex; align-items: center; gap: 0.5em; padding: 0.5em 1em; border-bottom: 1px solid var(--border); }
+        .code-window-dots { display: flex; gap: 0.35em; }
+        .code-window-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+        .code-window-title { font-family: 'Geist Mono', monospace; font-size: 0.55em; color: var(--muted-foreground); margin-left: 0.5em; }
+        .code-window pre { margin: 0; }
+        .code-window pre code { border: none; border-radius: 0; font-size: 0.75em; }
+
+        .reveal table { margin: 1em auto; border-collapse: collapse; font-size: 0.7em; }
+        .reveal table th { padding: 0.6em 1em; text-align: left; font-weight: 500; color: var(--foreground); border-bottom: 1px solid var(--border); background: none; }
+        .reveal table td { padding: 0.6em 1em; border-bottom: 1px solid var(--border); color: var(--muted-foreground); }
+        .reveal table tr:last-child td { border-bottom: none; }
+
+        .box { background: var(--secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1em; margin: 0.6em 0; text-align: left; }
+        .box p { margin: 0; }
+        .box ul { margin-top: 0.4em; margin-bottom: 0; }
+        .box-accent { border-left: 2px solid var(--accent); }
+        .box-warning { border-left: 2px solid #e5a853; }
+        .box-success { border-left: 2px solid #5a9a6a; }
+
+        .flex-row { display: flex; gap: 1.2em; align-items: flex-start; text-align: left; }
+        .flex-row > div { flex: 1; }
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .small { font-size: 0.7em; }
+        .smaller { font-size: 0.6em; }
+        .mt-1 { margin-top: 0.4em; }
+        .mt-2 { margin-top: 0.8em; }
+
+        .section-label { position: absolute; top: 20px; left: 30px; font-family: 'Geist Mono', monospace; font-size: 0.4em; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.12em; }
+        section:has(.section-label) h2 { margin-top: 1.5em; }
+        .subtitle { font-size: 1.1em !important; color: var(--muted-foreground) !important; font-weight: 400; }
+        .meta { font-family: 'Geist Mono', monospace; font-size: 0.55em !important; color: var(--muted-foreground) !important; margin-top: 1.5em !important; }
+
+        .flow-box { background: var(--secondary); border: 1px solid var(--border); padding: 0.5em 0.8em; border-radius: 6px; display: inline-block; margin: 0.2em; font-size: 0.8em; }
+        .flow-arrow { font-size: 1.3em; color: var(--muted); margin: 0 0.2em; }
+
+        .journey-step { padding: 0.3em 0; padding-left: 1em; border-left: 2px solid var(--border); margin: 0.25em 0; text-align: left; color: var(--muted-foreground); font-size: 0.9em; }
+        .journey-step:last-child { border-left-color: var(--accent); color: var(--foreground); }
+
+        .reveal .slides section .fragment { opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; }
+        .reveal .slides section .fragment.visible { opacity: 1; }
+
+        .reveal .progress { background: var(--border); height: 3px; }
+        .reveal .progress span { background: var(--accent); }
+        .reveal .controls { color: var(--muted); }
+        .reveal .controls button:hover { color: var(--foreground); }
+        .reveal .slide-number { font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted-foreground); background: none; }
+
+        .act-title { font-size: 2.5em !important; color: var(--accent) !important; }
+
+        /* Syntax highlighting overrides */
+        .hljs { background: transparent !important; }
+        .hljs-keyword { color: #d4a574; font-weight: 500; }
+        .hljs-string { color: #9cdcfe; }
+        .hljs-comment { color: #6a9955; font-style: italic; }
+        .hljs-title { color: #dcdcaa; }
+        .hljs-attr { color: #9cdcfe; }
+
+        /* Split view styles */
+        .split-container { display: flex; gap: 0; font-size: 0.7em; position: relative; max-height: 500px; }
+        .split-pane { overflow-y: auto; overflow-x: hidden; max-height: 500px; display: flex; flex-direction: column; }
+        .split-pane pre { flex: 1; overflow: visible; margin: 0; }
+        .split-pane pre code { max-height: none !important; overflow: visible; }
+        #left-pane pre code { font-size: 0.9375em; }
+        .split-pane::-webkit-scrollbar { width: 8px; }
+        .split-pane::-webkit-scrollbar-track { background: var(--secondary); }
+        .split-pane::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 4px; }
+        .split-pane::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+        .split-divider {
+            width: 4px;
+            background: var(--border);
+            cursor: col-resize;
+            position: relative;
+            transition: background 0.2s;
+        }
+        .split-divider:hover { background: var(--accent); }
+        .split-divider::after {
+            content: '';
+            position: absolute;
+            left: -4px;
+            right: -4px;
+            top: 0;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- S1: Title -->
+            <section>
+                <h1>Spec-Driven Development</h1>
+                <p class="subtitle">and a little bit of BDD</p>
+                <p class="meta">Ali Reza Yahya · @alileza</p>
+
+                <div class="box box-warning" style="margin-top: 2em; font-size: 0.6em;">
+                    <p style="margin: 0;"><em>⚠️ This is mostly my 2 cents and personal opinions from working with AI in the past year. Take the key points at your own risk.</em></p>
+                </div>
+            </section>
+
+            <!-- S2: ACT 1 Title -->
+            <section>
+                <h2 class="act-title">ACT 1</h2>
+                <p class="subtitle">The Skeptic</p>
+            </section>
+
+            <!-- S3: Opening: The Promise vs Reality -->
+            <section>
+                <span class="section-label">Act 1 · The Skeptic</span>
+                <h2>The Promise vs Reality</h2>
+
+                <blockquote class="fragment"><p>"AI will write all your code!"</p></blockquote>
+                <blockquote class="fragment"><p>"Just describe what you want!"</p></blockquote>
+                <blockquote class="fragment"><p>"10x developer productivity!"</p></blockquote>
+
+                <p class="fragment mt-2">
+                    <strong>The Hype:</strong> Everyone's talking about AI-assisted development.<br>
+                    Copilot, ChatGPT, Claude—they're supposed to revolutionize how we build software.
+                </p>
+            </section>
+
+            <!-- S4: My Initial Experience -->
+            <section>
+                <span class="section-label">Act 1 · The Skeptic</span>
+                <h2>My Initial Experience</h2>
+
+                <div class="fragment">
+                    <p class="text-left">It's nice as a fancy auto-complete, helps to write some complex functions, etc.</p>
+
+                    <p class="text-left mt-2"><strong>But to delegate whole end-to-end features?</strong></p>
+                    <p class="text-left">Simply... it's not cutting it.</p>
+                </div>
+            </section>
+
+            <!-- S6: Then Agent Mode Came -->
+            <section>
+                <span class="section-label">Act 1 · The Skeptic</span>
+                <h2>Then Agent Mode Came</h2>
+
+                <div class="fragment">
+                    <p class="text-left">A shift from just normal auto-complete...</p>
+
+                    <p class="text-left mt-2"><strong>To completely taking over:</strong></p>
+                    <ul>
+                        <li class="fragment">Full access to your codebase</li>
+                        <li class="fragment">Control over your terminal</li>
+                        <li class="fragment">Ability to read, write, and execute</li>
+                    </ul>
+
+                    <div class="box box-accent fragment mt-2">
+                        <p style="color: var(--foreground);"><strong>This was a game changer.</strong></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S6.1: But It Wasn't Enough -->
+            <section>
+                <span class="section-label">Act 1 · The Skeptic</span>
+                <h2>But It Wasn't Enough</h2>
+
+                <div class="fragment">
+                    <p class="text-left">Well, it's awesome...</p>
+
+                    <p class="text-left mt-2">I can ask them to do many things. It <em>"somehow"</em> delivers.</p>
+
+                    <div class="fragment mt-2">
+                        <p class="text-left"><strong>But many times:</strong></p>
+                        <ul>
+                            <li>Not delivering the code I'm expecting</li>
+                            <li>Not the exact experience I had in mind</li>
+                        </ul>
+                    </div>
+
+                    <div class="box box-warning fragment mt-2">
+                        <p>More like a tool to <strong>play around</strong>, build some <strong>demos</strong>...<br>
+                        For real day-to-day work? <strong>I ended up rewriting the code myself</strong>.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S7: ACT 2 Title + The Question -->
+            <section>
+                <h2 class="act-title">ACT 2</h2>
+                <p class="subtitle">The Turning Point</p>
+
+                <div class="fragment mt-2" style="margin-top: 3em;">
+                    <p style="font-size: 1.3em; color: var(--foreground); line-height: 1.6;">
+                        What if the problem isn't the AI?
+                    </p>
+                    <p style="font-size: 1.5em; color: var(--accent); font-weight: 500; margin-top: 0.5em;">
+                        Maybe it's <strong style="color: var(--accent);">how I'm using it</strong>.
+                    </p>
+                </div>
+            </section>
+
+            <!-- S8: What AI Actually Does Well -->
+            <section>
+                <span class="section-label">Act 2 · The Turning Point</span>
+                <h2>What AI Actually Does Well</h2>
+
+                <!-- S8.1 -->
+                <div class="fragment text-left small">
+                    <p><strong>1. Executing specific instructions</strong></p>
+                    <ul>
+                        <li>"Change function name from <code>getUserData</code> to <code>fetchUserProfile</code>"</li>
+                        <li>Precise task → Precise output</li>
+                    </ul>
+                </div>
+
+                <!-- S8.2 -->
+                <div class="fragment text-left small mt-1">
+                    <p><strong>2. Reading existing codebase and translating</strong></p>
+                    <ul>
+                        <li>"Explain what this function does"</li>
+                        <li>AI is great at digesting existing code and explaining it</li>
+                    </ul>
+                </div>
+
+                <!-- S8.3 -->
+                <div class="fragment text-left small mt-1">
+                    <p><strong>3. Yapping</strong></p>
+                    <ul>
+                        <li>"You're absolutely right!" "That's a great question!"</li>
+                        <li><em>(At least it's enthusiastic about agreeing with you)</em></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- S9: What AI Doesn't Do Well -->
+            <section>
+                <span class="section-label">Act 2 · The Turning Point</span>
+                <h2>What AI Doesn't Do Well</h2>
+
+                <!-- S9.1 -->
+                <div class="fragment text-left small">
+                    <p><strong>1. Vague prompts</strong></p>
+                    <ul>
+                        <li>"Make this code better" / "Build me an authentication system"</li>
+                        <li>No constraints = AI makes assumptions = inconsistency</li>
+                    </ul>
+                </div>
+
+                <!-- S9.2 -->
+                <div class="fragment text-left small mt-1">
+                    <p><strong>2. Big, complex codebases</strong></p>
+                    <ul>
+                        <li>Too much context to hold</li>
+                        <li>Makes locally-sensible but globally-wrong decisions</li>
+                    </ul>
+                </div>
+
+                <!-- S9.3 -->
+                <div class="fragment text-left small mt-1">
+                    <p><strong>3. Code noise / large input context</strong></p>
+                    <ul>
+                        <li>More input ≠ better output</li>
+                        <li>Signal-to-noise ratio matters</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- S10: The Insight -->
+            <section>
+                <span class="section-label">Act 2 · The Turning Point</span>
+                <h2>The Insight</h2>
+
+                <table>
+                    <tr>
+                        <th>AI Strength</th>
+                        <th>AI Weakness</th>
+                    </tr>
+                    <tr class="fragment">
+                        <td>Specific instructions</td>
+                        <td>Vague prompts</td>
+                    </tr>
+                    <tr class="fragment">
+                        <td>Focused context</td>
+                        <td>Large/noisy context</td>
+                    </tr>
+                    <tr class="fragment">
+                        <td>Transforming existing info</td>
+                        <td>Creating from nothing</td>
+                    </tr>
+                </table>
+
+                <p class="fragment mt-2">
+                    <strong>The question becomes:</strong> How do I give AI more of what it's good at?
+                </p>
+            </section>
+
+            <!-- S11: Enter: Spec-Driven Development (Maybe?) -->
+            <section>
+                <span class="section-label">Act 2 · The Turning Point</span>
+                <h2>Enter: Spec-Driven Development (Maybe?)</h2>
+
+                <!-- S11.1 -->
+                <div class="fragment">
+                    <div class="box box-warning text-left">
+                        <p><strong>Disclaimer:</strong> I'm not saying this is THE answer. It's not a silver bullet.</p>
+                        <ul class="small">
+                            <li>I don't use this approach all the time</li>
+                            <li>It's not a framework I follow religiously</li>
+                            <li>It's a collection of learnings from experimenting with AI agents</li>
+                        </ul>
+                    </div>
+                    <p class="mt-1"><strong>What I'm sharing:</strong> Approaches I found genuinely useful. Take what works, leave what doesn't.</p>
+                </div>
+            </section>
+
+            <!-- S12: Why Specs Might Help -->
+            <section>
+                <span class="section-label">Act 2 · The Turning Point</span>
+                <h2>Why Specs Might Help</h2>
+
+                <p>Specs can be the bridge:</p>
+                <ul class="text-left">
+                    <li class="fragment"><strong>Vague idea</strong> → Spec → <strong>Specific instructions</strong></li>
+                    <li class="fragment"><strong>Large codebase</strong> → Spec → <strong>Focused context</strong></li>
+                    <li class="fragment"><strong>Creating from nothing</strong> → Spec → <strong>Transforming requirements into code</strong></li>
+                </ul>
+            </section>
+
+            <!-- S13: ACT 3 + Definition -->
+            <section>
+                <h2 class="act-title">ACT 3</h2>
+                <p class="subtitle">What is Spec-Driven Development?</p>
+
+                <blockquote class="fragment">
+                    <p>"Spec-driven development means writing a spec before writing code with AI. The spec becomes the source of truth for both the human and the AI."</p>
+                    <cite>— Birgitta Böckeler, Martin Fowler's blog</cite>
+                </blockquote>
+
+                <div class="box box-accent fragment mt-1">
+                    <p style="color: var(--foreground);">"Maintaining software means evolving specifications. Code is the last-mile artifact."</p>
+                </div>
+            </section>
+
+            <!-- S13.1: Spec-Driven Flow Diagram -->
+            <section style="display: flex; align-items: center; justify-content: center;">
+                <span class="section-label">Act 3 · What is SDD?</span>
+
+                <img src="spec-driven-development_diagram.png" alt="Spec-Driven Development Flow" style="max-width: 60%; border-radius: 8px; border: 1px solid var(--border);">
+            </section>
+
+            <!-- S14: What is a "Spec" Anyway? -->
+            <section>
+                <span class="section-label">Act 3 · What is SDD?</span>
+                <h2>What is a "Spec" Anyway?</h2>
+
+                <p class="small" style="color: var(--muted-foreground);"><strong>spec</strong> (n.) — a detailed description of work to be done or materials to be used in a project</p>
+
+                <p class="fragment mt-2"><strong>Not</strong> just user stories — that's only part of it.</p>
+                <p class="fragment"><strong>Not</strong> just API spec (OpenAPI) — that comes later.</p>
+                <p class="fragment"><strong>Not</strong> code comments — that's after the fact.</p>
+            </section>
+
+            <!-- S16: What a Spec Looks Like -->
+            <section>
+                <span class="section-label">Act 3 · What is SDD?</span>
+                <h2>What a Spec Looks Like</h2>
+
+                <img src="specs_detail_diagram.png" alt="What a Spec Looks Like" style="max-width: 90%; border-radius: 8px; border: 1px solid var(--border);">
+            </section>
+
+            <!-- S17: Example: GitHub's Spec-Kit -->
+            <section>
+                <span class="section-label">Act 3 · What is SDD?</span>
+                <h2>Example: GitHub's Spec-Kit</h2>
+
+                <p class="small">Open-source toolkit: <a href="https://github.com/github/spec-kit">github/spec-kit</a></p>
+
+                <blockquote class="fragment small">
+                    <p>"We treat coding agents like search engines when we should be treating them like literal-minded pair programmers."</p>
+                </blockquote>
+            </section>
+
+            <!-- S18: Four-phase workflow -->
+            <section>
+                <span class="section-label">Act 3 · What is SDD?</span>
+                <h2>Spec-Kit Workflow</h2>
+
+                <table class="smaller">
+                    <tr>
+                        <th>Phase</th>
+                        <th>Command</th>
+                        <th>Output</th>
+                    </tr>
+                    <tr>
+                        <td>1. Specify</td>
+                        <td><code>/speckit.specify</code></td>
+                        <td>specs/[feature]/spec.md</td>
+                    </tr>
+                    <tr>
+                        <td>2. Plan</td>
+                        <td><code>/speckit.plan</code></td>
+                        <td>specs/[feature]/plan.md</td>
+                    </tr>
+                    <tr>
+                        <td>3. Tasks</td>
+                        <td><code>/speckit.tasks</code></td>
+                        <td>specs/[feature]/tasks.md</td>
+                    </tr>
+                    <tr>
+                        <td>4. Implement</td>
+                        <td><code>/speckit.implement</code></td>
+                        <td>Source code files</td>
+                    </tr>
+                </table>
+
+                <div class="fragment mt-2">
+                    <p class="small"><strong>Optional commands:</strong></p>
+                    <table class="smaller">
+                        <tr><td><code>/speckit.constitution</code></td><td>Project principles</td></tr>
+                        <tr><td><code>/speckit.clarify</code></td><td>Clarify underspecified areas</td></tr>
+                        <tr><td><code>/speckit.analyze</code></td><td>Consistency check</td></tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- S19: Workflow diagram -->
+            <section style="display: flex; align-items: center; justify-content: center;">
+                <span class="section-label">Act 3 · What is SDD?</span>
+
+                <img src="../draft/workflow.png" alt="Spec-Kit Workflow" style="max-width: 100%; border-radius: 8px; border: 1px solid var(--border);">
+            </section>
+
+            <!-- S20: References (ACT 3) -->
+            <section>
+                <span class="section-label">Act 3 · What is SDD?</span>
+                <h2>References</h2>
+
+                <ul class="text-left small">
+                    <li><a href="https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html">Exploring Generative AI: Spec-Driven Development Tools</a><br><span style="color: var(--muted-foreground);">— Birgitta Böckeler</span></li>
+                    <li class="mt-1"><a href="https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/">GitHub Blog: Spec-driven development with AI</a></li>
+                </ul>
+            </section>
+
+            <!-- S21: ACT 4 + First, the Good Part -->
+            <section>
+                <h2 class="act-title">ACT 4</h2>
+                <p class="subtitle">My Problem with Specs</p>
+
+                <div class="box box-success fragment mt-2 text-left small">
+                    <p><strong>First, the good part:</strong> Specs are genuinely great:</p>
+                    <ul>
+                        <li>Clear requirements before coding</li>
+                        <li>AI has context, constraints, success criteria</li>
+                        <li>Consistent output, reviewable against spec</li>
+                        <li>Reduced back-and-forth</li>
+                    </ul>
+                    <p class="mt-1"><strong>When it works, it works beautifully.</strong></p>
+                </div>
+            </section>
+
+            <!-- S22: But Then Reality Hits -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>But Then Reality Hits</h2>
+
+                <p>Over time, I noticed something:</p>
+
+                <div class="box box-warning fragment">
+                    <p style="font-size: 1.2em; color: var(--foreground);"><strong>Code evolves. Specs don't.</strong></p>
+                </div>
+
+                <ul class="fragment text-left small mt-1">
+                    <li>Quick fix here, refactor there</li>
+                    <li>"I'll update the spec later" <em>(narrator: they didn't)</em></li>
+                    <li>New edge case discovered — code handles it, spec doesn't mention it</li>
+                    <li>Spec says one thing, code does another</li>
+                </ul>
+            </section>
+
+            <!-- S23: Stale Specs Become Noise -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>Stale Specs Become Noise</h2>
+
+                <p>Outdated specs aren't just useless — they're <strong>harmful</strong>.</p>
+
+                <div class="box box-warning fragment text-left mt-1">
+                    <p>When AI reads an outdated spec:</p>
+                    <ul class="small">
+                        <li>It gets confused by contradictions</li>
+                        <li>It might "fix" code to match the old spec</li>
+                        <li>It hallucinates based on stale requirements</li>
+                    </ul>
+                </div>
+
+                <p class="fragment mt-1"><strong>Documentation noise → AI hallucination</strong></p>
+            </section>
+
+            <!-- S24: "But the Spec is the Source of Truth!" -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>"The Spec is the Source of Truth"</h2>
+
+                <blockquote class="small">
+                    <p>"The spec becomes the source of truth for the human and the AI."</p>
+                    <cite>— Martin Fowler article</cite>
+                </blockquote>
+
+                <p class="fragment mt-1"><strong>The ideal</strong> — yes, beautiful.</p>
+                <p class="fragment"><strong>The reality</strong> — not how most teams actually work.</p>
+            </section>
+
+            <!-- S26: So What's the Solution? -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>So What's the Solution?</h2>
+            </section>
+
+            <!-- S27: Option A: Disposable Specs -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>Option A: Disposable Specs</h2>
+
+                <p>Use spec → Build feature → Deprecate spec → Keep code & docs</p>
+
+                <ul class="text-left small fragment">
+                    <li>Spec served its purpose (guiding implementation)</li>
+                    <li>Don't pretend it's maintained</li>
+                    <li>Accept that code is the real source of truth</li>
+                </ul>
+
+                <p class="fragment mt-1"><em>Problem: Next time you touch this feature, you're back to square one.</em></p>
+            </section>
+
+            <!-- S28: Option B: Living Specs -->
+            <section>
+                <span class="section-label">Act 4 · My Problem with Specs</span>
+                <h2>Option B: Living Specs</h2>
+
+                <p class="fragment">What if specs could <strong>enforce themselves</strong>?</p>
+                <p class="fragment">What if specs weren't just documentation, but <strong>assertions against your running application</strong>?</p>
+                <p class="fragment">What if outdated specs would <strong>fail</strong> instead of silently misleading?</p>
+
+                <div class="box box-accent fragment mt-1">
+                    <p style="color: var(--foreground);"><strong>This is where Behavior-Driven Development comes in...</strong></p>
+                </div>
+            </section>
+
+            <!-- S29: ACT 5 + BDD Intro -->
+            <section>
+                <h2 class="act-title">ACT 5</h2>
+                <p class="subtitle">Let's Talk About BDD</p>
+
+                <div class="fragment mt-2 text-left">
+                    <p><strong>BDD</strong> is a testing approach where tests <strong>describe the behavior</strong> of your application.</p>
+                    <p class="mt-1"><strong>Blackbox testing</strong> means the test has <strong>zero context</strong> about your codebase — it acts like an external actor.</p>
+                </div>
+            </section>
+
+            <!-- S30: The test doesn't know / only knows -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>Blackbox Testing</h2>
+
+                <div class="flex-row small">
+                    <div class="box fragment">
+                        <h3>The test doesn't know:</h3>
+                        <ul>
+                            <li>What language your app is written in</li>
+                            <li>How your code is structured</li>
+                        </ul>
+                    </div>
+                    <div class="box box-accent fragment">
+                        <h3>The test only knows:</h3>
+                        <ul>
+                            <li>How to interact with interface</li>
+                            <li>Assert dependencies such as database, message queue</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S31: How to get spec into executable test cases? -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>How to get spec into executable test cases?</h2>
+            </section>
+
+            <!-- S32: Spec to Test Diagram -->
+            <section style="display: flex; align-items: center; justify-content: center;">
+                <span class="section-label">Act 5 · BDD</span>
+
+                <img src="spec_to_test.png" alt="Spec to Test" style="max-width: 70%; border-radius: 8px; border: 1px solid var(--border);">
+            </section>
+
+            <!-- S32.1: BDD Frameworks for Kotlin -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>How can we add BDD test to our app?</h2>
+
+                <p class="small">Popular BDD frameworks for Kotlin:</p>
+
+                <ul class="text-left">
+                    <li class="fragment"><strong>Cucumber-JVM</strong> — Gherkin-based BDD framework</li>
+                    <li class="fragment"><strong>Kotest</strong> — BDD-style testing with behavior spec</li>
+                    <li class="fragment"><strong>Spek</strong> — Specification framework for Kotlin</li>
+                    <li class="fragment"><strong>Kluent</strong> — Fluent assertion library with BDD syntax</li>
+                    <li class="fragment"><strong>Tomato</strong> — Language-agnostic BDD framework</li>
+                </ul>
+            </section>
+
+            <!-- S32.2: BDD Comparison Diagram -->
+            <section style="display: flex; align-items: center; justify-content: center;">
+                <span class="section-label">Act 5 · BDD</span>
+
+                <img src="bdd_comparison.png" alt="BDD Comparison" style="max-width: 80%; border-radius: 8px; border: 1px solid var(--border);">
+            </section>
+
+            <!-- S34: Let's Talk About Tomato -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>Let's talk a bit about Tomato</h2>
+
+                <div class="fragment">
+                    <p><a href="https://github.com/tomatool/tomato">Tomato</a> — a language-agnostic BDD framework I developed</p>
+
+                    <div class="box box-accent mt-2 text-left">
+                        <p><strong>Philosophy:</strong></p>
+                        <ul class="small">
+                            <li>Minimize setup complexity</li>
+                            <li>Focus on writing tests, not code</li>
+                            <li>Works with any language or platform</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- S35: Gherkin code example -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>One Scenario, Multiple Resources</h2>
+
+                <div class="split-container" id="split-container">
+                    <div class="split-pane code-window" id="left-pane" style="flex-basis: 60%;">
+                        <div class="code-window-header">
+                            <div class="code-window-dots">
+                                <div class="code-window-dot"></div>
+                                <div class="code-window-dot"></div>
+                                <div class="code-window-dot"></div>
+                            </div>
+                            <span class="code-window-title">payment.feature</span>
+                        </div>
+                        <pre><code class="language-gherkin">Feature: Payment Processing
+
+Scenario: Successful payment updates DB
+  # 1. Mock 3rd party (Visa) response
+  Given "visa-api" stub "POST" "/v1/charges"
+    returns "200" with json:
+    """
+    {"transaction_id": "TXN-789",
+     "status": "approved"}
+    """
+
+  # 2. Call our payment API
+  When "api" sends "POST" to "/payments"
+    with json:
+    """
+    {"user_id": "user-123",
+     "amount": 99.99,
+     "card_token": "tok_visa"}
+    """
+  Then "api" response status is "201"
+
+  # 3. Verify database was updated
+  And "db" table "payments" contains:
+    | user_id  | amount | status   |
+    | user-123 | 99.99  | approved |
+
+  # 4. Verify event was published
+  And "kafka" receives from "payment-events"
+    within "5s"</code></pre>
+                    </div>
+
+                    <div class="split-divider" id="split-divider"></div>
+
+                    <div class="split-pane code-window" id="right-pane" style="flex-basis: 40%;">
+                        <div class="code-window-header">
+                            <div class="code-window-dots">
+                                <div class="code-window-dot"></div>
+                                <div class="code-window-dot"></div>
+                                <div class="code-window-dot"></div>
+                            </div>
+                            <span class="code-window-title">tomato.yml</span>
+                        </div>
+                        <pre><code class="language-yaml">version: 2
+
+settings:
+  timeout: 5m
+  output: pretty
+  reset:
+    level: scenario
+
+features:
+  paths:
+    - ./features
+
+app:
+  command: ./payment-api
+  port: 8080
+  env:
+    VISA_BASE_URL: "{{.visa-api.url}}"
+    DATABASE_URL: "postgres://test:test@{{.postgres.host}}:{{.postgres.port.5432}}/payments"
+    KAFKA_BOOTSTRAP_SERVERS: "localhost:9092"
+  ready:
+    type: http
+    path: /health
+    status: 200
+    timeout: 30s
+
+resources:
+  # Mock Visa API (standalone handler, no container)
+  visa-api:
+    type: http-server
+    options:
+      port: 9001
+
+  # Your app's HTTP API client
+  api:
+    type: http-client
+    base_url: "http://localhost:8080"
+
+  # Postgres step handler
+  db:
+    type: postgres
+    container: postgres
+    options:
+      database: payments
+      user: test
+      password: test
+
+  # Kafka step handler
+  kafka:
+    type: kafka
+    container: kafka
+    options:
+      topics: ["payment-events"]
+      partitions: 1
+      replication_factor: 1
+      reset_strategy: delete_recreate
+
+containers:
+  postgres:
+    image: postgres:16
+    env:
+      POSTGRES_DB: payments
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5432/tcp"
+    wait_for:
+      type: port
+      target: "5432/tcp"
+      timeout: 30s
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    env:
+      ZOOKEEPER_CLIENT_PORT: "2181"
+      ZOOKEEPER_TICK_TIME: "2000"
+    ports:
+      - "2181/tcp"
+    wait_for:
+      type: port
+      target: "2181/tcp"
+      timeout: 30s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    depends_on: [zookeeper]
+    env:
+      KAFKA_BROKER_ID: "1"
+      KAFKA_ZOOKEEPER_CONNECT: "{{.zookeeper.host}}:{{.zookeeper.port.2181}}"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+      - "29092/tcp"
+    wait_for:
+      type: port
+      target: "9092/tcp"
+      timeout: 60s</code></pre>
+                    </div>
+                </div>
+
+                <div class="fragment smaller mt-1">
+                    <p><strong>One test. Four resources. Zero knowledge of implementation.</strong></p>
+                </div>
+            </section>
+
+            <!-- S36: Why This Solves the Stale Spec Problem -->
+            <section>
+                <span class="section-label">Act 5 · BDD</span>
+                <h2>Why This Solves the Stale Spec Problem</h2>
+
+                <ol class="text-left">
+                    <li class="fragment"><strong>Specs are tests</strong> — If code changes and behavior doesn't match, tests fail</li>
+                    <li class="fragment"><strong>Living documentation</strong> — Always reflects actual behavior (or it breaks)</li>
+                    <li class="fragment"><strong>Blackbox = implementation-agnostic</strong> — Refactor freely, behavior stays same</li>
+                    <li class="fragment"><strong>AI can generate AND verify</strong> — Write BDD specs, AI implements until tests pass</li>
+                </ol>
+            </section>
+
+            <!-- S37: Closing -->
+            <section>
+                <h2>What I Learned</h2>
+
+                <ol class="text-left">
+                    <li class="fragment"><strong>AI is only as good as your input</strong></li>
+                    <li class="fragment"><strong>Structure helps</strong> — Specs create shared context</li>
+                    <li class="fragment"><strong>Nothing is a silver bullet</strong></li>
+                    <li class="fragment"><strong>Find what works for you</strong></li>
+                </ol>
+            </section>
+
+            <!-- S38: Q&A -->
+            <section>
+                <h1>Q&A</h1>
+                <p class="subtitle">Questions?</p>
+                <p class="meta">@alileza · github.com/alileza</p>
+            </section>
+
+            <!-- S39: References -->
+            <section>
+                <h2>References</h2>
+
+                <ul class="text-left small">
+                    <li><a href="https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html">Exploring Generative AI: Spec-Driven Development Tools</a><br><span style="color: var(--muted-foreground);">— Birgitta Böckeler</span></li>
+                    <li class="mt-1"><a href="https://github.com/github/spec-kit">GitHub Spec-Kit</a></li>
+                    <li class="mt-1"><a href="https://github.com/tomatool/tomato">Tomato BDD Framework</a></li>
+                </ul>
+
+                <p class="mt-2 small" style="color: var(--muted-foreground);"><em>Presentation built with reveal.js</em></p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/gherkin.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/yaml.min.js"></script>
+    <script>
+        Reveal.initialize({
+            controls: true,
+            controlsTutorial: false,
+            progress: true,
+            slideNumber: true,
+            history: true,
+            keyboard: true,
+            overview: true,
+            center: true,
+            touch: true,
+            loop: false,
+            transition: 'fade',
+            transitionSpeed: 'default',
+            backgroundTransition: 'fade',
+            viewDistance: 3,
+            plugins: []
+        });
+
+        // Initialize syntax highlighting
+        Reveal.on('ready', () => {
+            hljs.highlightAll();
+            initSplitView();
+        });
+
+        // Draggable split view
+        function initSplitView() {
+            const divider = document.getElementById('split-divider');
+            const container = document.getElementById('split-container');
+            const leftPane = document.getElementById('left-pane');
+            const rightPane = document.getElementById('right-pane');
+
+            if (!divider || !container || !leftPane || !rightPane) return;
+
+            let isDragging = false;
+
+            divider.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                const containerRect = container.getBoundingClientRect();
+                const containerWidth = containerRect.width;
+                const mouseX = e.clientX - containerRect.left;
+                const leftPercent = (mouseX / containerWidth) * 100;
+
+                // Limit between 20% and 80%
+                if (leftPercent >= 20 && leftPercent <= 80) {
+                    leftPane.style.flexBasis = leftPercent + '%';
+                    rightPane.style.flexBasis = (100 - leftPercent) + '%';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+        }
+    </script>
+</body>
+</html>
